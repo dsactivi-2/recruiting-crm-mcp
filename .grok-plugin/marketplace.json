@@ -1,0 +1,7 @@
+{
+  "name": "recruiting-crm",
+  "displayName": "Recruiting CRM",
+  "description": "Bewerbersuche, Filter und Beruf-Mapping über die CRM-RPCs in Supabase.",
+  "version": "1.0.0",
+  "skills": ["skills/recruiting-crm"]
+}

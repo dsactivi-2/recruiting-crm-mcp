@@ -1,0 +1,7 @@
+{
+  "id": "recruiting-crm",
+  "name": "Recruiting CRM",
+  "version": "1.0.0",
+  "description": "Bewerbersuche und Beruf-Mapping über crm_api RPCs.",
+  "skills": ["../../skills/recruiting-crm"]
+}
