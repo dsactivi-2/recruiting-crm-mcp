@@ -1,102 +1,81 @@
 ---
 name: recruiting-crm
 description: >
-  Recruiting-CRM suchen und Berufe mappen. Immer nutzen bei Bewerber, Kandidat,
-  CRM-Suche, Filter, Ausbildung, Alter, Führerschein, Region, Sprache, Beruf
-  ummappen, Occupation, Nalog, Projekt, Visum, Slobodan, Automehaničar,
-  search_candidates, get_candidate, remap. Auch bei einfacher Sprache
-  („zeig mir Elektriker aus Tuzla mit B-Führerschein und Deutsch A2“).
-  Nicht nutzen für LiveKit-Calls, Dograh-Deploy oder allgemeines SQL.
+  IMMER nutzen bei Bewerber, Kandidat, CRM, Filter, Ausbildung, Alter,
+  Führerschein, Region, Sprache, Beruf ummappen, Occupation, Nalog, Projekt,
+  Visum, Slobodan, Automehaničar, search_candidates, remap, unmap.
+  IMMER nutzen wenn der User sagt Plugin, Skill installieren, recruiting-crm
+  einrichten, MCP verbinden, Grok-Plugin, Hermes-Skill — dann zuerst
+  Selbst-Installation und Checkliste, nicht erst suchen.
+  Auch bei Alltagssprache („Elektriker aus Tuzla, B-Führerschein, Deutsch A2“).
+  Nicht für LiveKit, Dograh oder SQL auf Tabellen.
 ---
 
 # Recruiting CRM
 
-Skill allein sucht **keine** Bewerber. Die Leitung ist der MCP-Server
-`recruiting-crm`. Fehlt er, verbindest du ihn **sofort** — nicht erst „ich kann nicht“.
+Skill = Anleitung. Leitung = MCP-Tools oder Supabase-RPCs. Ohne Leitung nicht suchen.
 
-## 0. Verbindung prüfen (immer zuerst)
+## A. Selbst-Installation (sofort, wenn User Skill/Plugin einfügt oder „installieren“ sagt)
 
-Tools die da sein müssen: `count_candidates`, `search_candidates`, `get_candidate`,
-`list_occupations`, `list_candidate_jobs`, `list_occupation_review_queue`,
-`search_candidates_by_occupation`, `remap_job_occupation`, `unmap_job_occupation`.
+1. Lege den Skill lokal an, falls der Ordner fehlt:
+   - Grok: `~/.grok/skills/recruiting-crm/SKILL.md` (diese Datei).
+   - Hermes: `~/.hermes/skills/recruiting-crm/SKILL.md`.
+2. Sage in einem Satz: „Skill liegt. Jetzt prüfen wir die Leitung.“
+3. Prüfe Tools in DIESER Session (nicht raten):
 
-**Wenn eines der Lese-Tools fehlt:**
+| Leitung | Erkannt wenn |
+|---|---|
+| MCP | Tools `count_candidates`, `search_candidates`, `get_candidate`, `list_occupations`, `list_candidate_jobs`, `list_occupation_review_queue`, `search_candidates_by_occupation`, `remap_job_occupation`, `unmap_job_occupation` |
+| Grok-Supabase | Tool wie `supabase___execute_sql` — dann nur `SELECT … FROM crm_api.<rpc>(…)` |
+| Nichts | Nächster Schritt B, dann fragen |
 
-1. Sag in einem Satz: Skill ist Anleitung, MCP ist die Leitung — Leitung fehlt.
-2. Gib den Block unten zum Einfügen. Biete an, `~/.hermes/config.yaml` zu ergänzen.
-3. Danach: `hermes mcp list` oder `/reload-mcp` / neue Session.
-4. Nicht auf den nackten Supabase-MCP ausweichen (`execute_sql` auf Kandidaten verboten).
+4. Fehlt etwas: **eine Frage nach der anderen**, nicht alles auf einmal.
+5. Erst suchen, wenn eine Leitung steht.
 
-### Was wohin
+## B. Was du den User fragen musst (nur Fehlendes)
 
-| Was | Wert | Wohin |
-|---|---|---|
-| MCP-URL | `https://recruiting-crm-mcp.6f484zn9bd.workers.dev/mcp` | `mcp_servers.recruiting-crm.url` in `~/.hermes/config.yaml` |
-| Read-Key | vom Betreiber, Secret `MCP_READ_KEY` | Header `Authorization: Bearer …` |
-| Write-Key | Secret `MCP_WRITE_KEY` | gleicher Header; Remap/Unmap gehen jetzt auch mit Read-Key |
-| Reload | `hermes mcp list` dann neue Session oder `/reload-mcp` | Terminal / Chat |
+Reihenfolge:
 
-Key nicht aus dem öffentlichen Repo lesen. Fehlt er: „Gib MCP_READ_KEY (Cloudflare Worker recruiting-crm-mcp → Variables).“
+1. „Ist der Supabase-Connector in DIESEM Grok-Projekt / dieser Hermes-Session angeschlossen?“ (ja/nein)
+2. Wenn nein und keine MCP-Tools: „Gib den MCP_READ_KEY. Den findest du bei Cloudflare → Worker `recruiting-crm-mcp` → Settings → Variables / Secrets. Nicht den Supabase-service_role hierher posten, wenn der Worker schon läuft.“
+3. Optional: „Soll Remap in dieser Session gehen? Read-Key reicht.“
 
-### In `~/.hermes/config.yaml` einfügen
+Nicht fragen, was schon da ist.
+
+### Fertige Werte (nicht neu erfinden)
+
+| Stück | Wert |
+|---|---|
+| MCP-URL | `https://recruiting-crm-mcp.6f484zn9bd.workers.dev/mcp` |
+| Auth | Header `Authorization: Bearer <MCP_READ_KEY>` |
+| Read-Key | Cloudflare Worker `recruiting-crm-mcp` Secret `MCP_READ_KEY` |
+| Write-Key | Secret `MCP_WRITE_KEY` (optional) |
+| Repo | https://github.com/dsactivi-2/recruiting-crm-mcp |
+
+### Hermes-Block
 
 ```yaml
 mcp_servers:
   recruiting-crm:
     url: "https://recruiting-crm-mcp.6f484zn9bd.workers.dev/mcp"
     headers:
-      Authorization: "Bearer READ_KEY_HIER"
+      Authorization: "Bearer MCP_READ_KEY_HIER"
     enabled: true
     timeout: 120
     connect_timeout: 30
 ```
 
-Nach dem Speichern: Session neu oder `/reload-mcp`.
+Danach: `/reload-mcp` oder neue Session.
 
-### Tool-Namen am MCP
+### Leitung-fehlt-Satz
 
-| MCP-Tool | Argumente |
-|---|---|
-| `count_candidates` | `filters` (Array), `query` |
-| `search_candidates` | `filters`, `query`, `limit`, `cursor` |
-| `get_candidate` | `candidate_id` |
-| `list_occupations` | `query`, `limit` |
-| `list_candidate_jobs` | `candidate_id` |
-| `list_occupation_review_queue` | `limit` |
-| `search_candidates_by_occupation` | `occupation_slug`, `min_years`, `limit` |
-| `remap_job_occupation` | `kri_id` + `occupation_slug` (oder id / new_label_bs) |
-| `unmap_job_occupation` | `kri_id`, optional `remove_alias` |
+> Skill ist da. Leitung zur CRM-DB fehlt in dieser Session.
+> Variante 1: Supabase an dieses Projekt hängen.
+> Variante 2: MCP-URL plus Bearer MCP_READ_KEY.
+> Key: Cloudflare → recruiting-crm-mcp → Secrets. Danach neue Session.
 
-## Ablauf
+## C. Suche und Mapping (nur mit Leitung)
 
-1. Verbindung wie oben.
-2. Unsicher → `references/commands.md`.
-3. Nur MCP-Tools. Nie Raw-SQL. Nie JMBG, Passwort, LK, Pass.
-4. Erst zählen, dann suchen, dann Profil. Remap/Unmap nur nach `list_candidate_jobs`.
-
-## Intent → Befehl
-
-| User sagt ungefähr | Tool |
-|---|---|
-| such / find / wer hat / filter | `count_candidates` dann `search_candidates` |
-| wie viele | nur `count_candidates` |
-| Profil / Details zu ID | `get_candidate` |
-| falsch gemappt / ummappen | `list_candidate_jobs` → `list_occupations` → `remap_job_occupation` |
-| Mapping löschen / unmap / zurück in Queue | `list_candidate_jobs` → `unmap_job_occupation` |
-| welche Berufe / Slug | `list_occupations` |
-| Queue / unklare Titel | `list_occupation_review_queue` |
-| mind. X Jahre als Beruf Y | `occupation` + `occupation_years` oder `search_candidates_by_occupation` |
-
-## Beruf ummappen
-
-1. `list_candidate_jobs` → `kri_id`
-2. `list_occupations` → Slug
-3. `remap_job_occupation` mit `kri_id` + Slug
-4. Mapping weg: `unmap_job_occupation` mit derselben `kri_id`
-5. Kurz bestätigen
-
-## Harte Grenzen
-
-- Kein `execute_sql` zum Filtern.
-- Status-RPCs nur wenn der User das klar will (am Worker oft gar nicht sichtbar).
-- Kein Massen-Remap ohne „alle mit diesem Titel“.
+Zählen → Liste → Profil. Remap/Unmap nach list_candidate_jobs.
+Filter: references/filters.md. Befehle: references/commands.md.
+Kein JOIN auf Tabellen. Kein JMBG/Passwort/Ausweis.
